@@ -65,6 +65,8 @@ export function fetchEventSource(input: RequestInfo, {
     ...rest
 }: FetchEventSourceInit) {
     return new Promise<void>((resolve, reject) => {
+        // set openWhenHidden to true when document is not defined
+        openWhenHidden ||= !self.document
         // make a copy of the input headers since we may modify it below:
         const headers = { ...inputHeaders };
         if (!headers.accept) {
@@ -86,8 +88,10 @@ export function fetchEventSource(input: RequestInfo, {
         let retryInterval = DefaultRetryInterval;
         let retryTimer = 0;
         function dispose() {
-            document.removeEventListener('visibilitychange', onVisibilityChange);
-            window.clearTimeout(retryTimer);
+            if (!openWhenHidden) {
+                document.removeEventListener('visibilitychange', onVisibilityChange);
+            }
+            self.clearTimeout(retryTimer);
             curRequestController.abort();
         }
 
@@ -97,7 +101,7 @@ export function fetchEventSource(input: RequestInfo, {
             resolve(); // don't waste time constructing/logging errors
         });
 
-        const fetch = inputFetch ?? window.fetch;
+        const fetch = inputFetch ?? self.fetch;
         const onopen = inputOnOpen ?? defaultOnOpen;
         async function create() {
             curRequestController = new AbortController();
@@ -131,8 +135,8 @@ export function fetchEventSource(input: RequestInfo, {
                     try {
                         // check if we need to retry:
                         const interval: any = onerror?.(err) ?? retryInterval;
-                        window.clearTimeout(retryTimer);
-                        retryTimer = window.setTimeout(create, interval);
+                        self.clearTimeout(retryTimer);
+                        retryTimer = self.setTimeout(create, interval);
                     } catch (innerErr) {
                         // we should not retry anymore:
                         dispose();
