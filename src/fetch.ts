@@ -65,8 +65,8 @@ export function fetchEventSource(input: RequestInfo, {
     ...rest
 }: FetchEventSourceInit) {
     return new Promise<void>((resolve, reject) => {
-        // set openWhenHidden to false when document is not defined
-        openWhenHidden ||= !!self.document
+        // set openWhenHidden to true when document is not defined
+        openWhenHidden ||= !self.document
         // make a copy of the input headers since we may modify it below:
         const headers = { ...inputHeaders };
         if (!headers.accept) {
